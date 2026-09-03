@@ -1,9 +1,55 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
 
-const app = new Hono()
+const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/api/health", (c) => {
+  return c.json({
+    status: "ok",
+    service: "campus-maintenance-api",
+  });
+});
 
-export default app
+app.post("/api/maintenance-requests", async (c) => {
+  const body = await c.req.json<{
+    student_id: string;
+    title: string;
+    description: string;
+    location: string;
+    priority?: string;
+  }>();
+
+  if (
+    !body.student_id ||
+    !body.title ||
+    !body.description ||
+    !body.location
+  ) {
+    return c.json(
+      {
+        error:
+          "student_id, title, description, and location are required",
+      },
+      400
+    );
+  }
+
+  const result = await c.env.DB
+    .prepare(`
+      INSERT INTO maintenance_requests
+      (student_id, title, description, location, priority)
+      VALUES (?, ?, ?, ?, ?)
+      RETURNING *
+    `)
+    .bind(
+      body.student_id,
+      body.title,
+      body.description,
+      body.location,
+      body.priority ?? "medium"
+    )
+    .first();
+
+  return c.json(result, 201);
+});
+
+export default app;
