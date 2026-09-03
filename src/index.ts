@@ -64,4 +64,28 @@ app.get("/api/maintenance-requests", async (c) => {
   return c.json(results);
 });
 
+app.get("/api/maintenance-requests/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const request = await c.env.DB
+    .prepare(`
+      SELECT *
+      FROM maintenance_requests
+      WHERE id = ?
+    `)
+    .bind(id)
+    .first();
+
+  if (!request) {
+    return c.json(
+      {
+        error: "Maintenance request not found",
+      },
+      404
+    );
+  }
+
+  return c.json(request);
+});
+
 export default app;
