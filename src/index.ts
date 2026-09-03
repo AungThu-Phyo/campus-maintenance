@@ -143,4 +143,28 @@ app.patch("/api/maintenance-requests/:id", async (c) => {
   return c.json(result);
 });
 
+app.delete("/api/maintenance-requests/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const result = await c.env.DB
+    .prepare(`
+      DELETE FROM maintenance_requests
+      WHERE id = ?
+      RETURNING *
+    `)
+    .bind(id)
+    .first();
+
+  if (!result) {
+    return c.json(
+      {
+        error: "Maintenance request not found",
+      },
+      404
+    );
+  }
+
+  return c.body(null, 204);
+});
+
 export default app;
