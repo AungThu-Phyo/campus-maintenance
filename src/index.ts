@@ -52,4 +52,16 @@ app.post("/api/maintenance-requests", async (c) => {
   return c.json(result, 201);
 });
 
+app.get("/api/maintenance-requests", async (c) => {
+  const { results } = await c.env.DB
+    .prepare(`
+      SELECT *
+      FROM maintenance_requests
+      ORDER BY id DESC
+    `)
+    .all();
+
+  return c.json(results);
+});
+
 export default app;
