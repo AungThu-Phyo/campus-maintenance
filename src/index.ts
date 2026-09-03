@@ -88,4 +88,59 @@ app.get("/api/maintenance-requests/:id", async (c) => {
   return c.json(request);
 });
 
+app.patch("/api/maintenance-requests/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const body = await c.req.json<{
+    title?: string;
+    description?: string;
+    location?: string;
+    priority?: string;
+    status?: string;
+  }>();
+
+  const existing = await c.env.DB
+    .prepare(`
+      SELECT *
+      FROM maintenance_requests
+      WHERE id = ?
+    `)
+    .bind(id)
+    .first();
+
+  if (!existing) {
+    return c.json(
+      {
+        error: "Maintenance request not found",
+      },
+      404
+    );
+  }
+
+  const result = await c.env.DB
+    .prepare(`
+      UPDATE maintenance_requests
+      SET
+        title = COALESCE(?, title),
+        description = COALESCE(?, description),
+        location = COALESCE(?, location),
+        priority = COALESCE(?, priority),
+        status = COALESCE(?, status),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      RETURNING *
+    `)
+    .bind(
+      body.title ?? null,
+      body.description ?? null,
+      body.location ?? null,
+      body.priority ?? null,
+      body.status ?? null,
+      id
+    )
+    .first();
+
+  return c.json(result);
+});
+
 export default app;
