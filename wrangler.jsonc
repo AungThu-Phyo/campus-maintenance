@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "campus_maintenance",
+	"name": "campus-maintenance",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-09-03",
 	"d1_databases": [
