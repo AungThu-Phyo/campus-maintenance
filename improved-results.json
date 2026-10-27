@@ -1,0 +1,247 @@
+{
+  "stage": "baseline",
+  "endpoint": "http://localhost:8787/api/maintenance-requests/decision",
+  "total_cases": 10,
+  "completed_cases": 10,
+  "correct_cases": 9,
+  "failed_cases": 1,
+  "accuracy_percent": 90.0,
+  "p95_latency_ms": 28.52,
+  "latency_sample_count": 10,
+  "latency_method": "Single client-side elapsed-time measurement per case; includes network and server time. P95 is provisional.",
+  "cost_per_task": "N/A: this endpoint uses deterministic rules and does not call a paid AI API.",
+  "results": [
+    {
+      "case_id": "T01",
+      "expected": {
+        "category": "plumbing",
+        "urgency_score": 3,
+        "urgency_level": "high",
+        "needs_human_review": true
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "plumbing",
+          "urgency_score": 3,
+          "urgency_level": "high",
+          "needs_human_review": true
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 28.52,
+      "pass": true
+    },
+    {
+      "case_id": "T02",
+      "expected": {
+        "category": "air_conditioning",
+        "urgency_score": 2,
+        "urgency_level": "moderate",
+        "needs_human_review": false
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "air_conditioning",
+          "urgency_score": 2,
+          "urgency_level": "moderate",
+          "needs_human_review": false
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 12.66,
+      "pass": true
+    },
+    {
+      "case_id": "T03",
+      "expected": {
+        "category": "other",
+        "urgency_score": 1,
+        "urgency_level": "low",
+        "needs_human_review": false
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "other",
+          "urgency_score": 1,
+          "urgency_level": "low",
+          "needs_human_review": false
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 12.49,
+      "pass": true
+    },
+    {
+      "case_id": "T04",
+      "expected": {
+        "category": "electrical",
+        "urgency_score": 4,
+        "urgency_level": "critical",
+        "needs_human_review": true
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "electrical",
+          "urgency_score": 4,
+          "urgency_level": "critical",
+          "needs_human_review": true
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 11.08,
+      "pass": true
+    },
+    {
+      "case_id": "T05",
+      "expected": {
+        "category": "air_conditioning",
+        "urgency_score": 1,
+        "urgency_level": "low",
+        "needs_human_review": false
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "air_conditioning",
+          "urgency_score": 1,
+          "urgency_level": "low",
+          "needs_human_review": false
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 10.82,
+      "pass": true
+    },
+    {
+      "case_id": "T06",
+      "expected": {
+        "category": "electrical",
+        "urgency_score": 2,
+        "urgency_level": "moderate",
+        "needs_human_review": false
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "electrical",
+          "urgency_score": 2,
+          "urgency_level": "moderate",
+          "needs_human_review": false
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 10.55,
+      "pass": true
+    },
+    {
+      "case_id": "T07",
+      "expected": {
+        "http_status": 400,
+        "error": "title must be a non-empty string",
+        "field": "title"
+      },
+      "http_status": 400,
+      "actual": {
+        "success": false,
+        "error": "title must be a non-empty string",
+        "field": "title"
+      },
+      "latency_ms": 10.59,
+      "pass": true
+    },
+    {
+      "case_id": "T08",
+      "expected": {
+        "category": "other",
+        "urgency_score": 0,
+        "urgency_level": "unknown",
+        "needs_human_review": true
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "other",
+          "urgency_score": 0,
+          "urgency_level": "unknown",
+          "needs_human_review": true
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 11.36,
+      "pass": true
+    },
+    {
+      "case_id": "T09",
+      "expected": {
+        "category": "electrical",
+        "urgency_score": 4,
+        "urgency_level": "critical",
+        "needs_human_review": true
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "electrical",
+          "urgency_score": 4,
+          "urgency_level": "critical",
+          "needs_human_review": true
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 10.65,
+      "pass": true
+    },
+    {
+      "case_id": "T10",
+      "expected": {
+        "category": "plumbing",
+        "urgency_score": 4,
+        "urgency_level": "critical",
+        "needs_human_review": true
+      },
+      "http_status": 200,
+      "actual": {
+        "success": true,
+        "recommendation": {
+          "category": "electrical",
+          "urgency_score": 4,
+          "urgency_level": "critical",
+          "needs_human_review": true
+        },
+        "decision_source": "fallback",
+        "method": "deterministic_rules",
+        "fallback_used": true
+      },
+      "latency_ms": 11.4,
+      "pass": false
+    }
+  ]
+}

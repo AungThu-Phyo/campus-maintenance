@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import maintenanceKnowledge from "../maintenance-knowledge.json";
 
 type DecisionCategory = "plumbing" | "electrical" | "air_conditioning" | "other";
 type UrgencyLevel = "low" | "moderate" | "high" | "critical" | "unknown";
@@ -14,7 +15,8 @@ const classificationRules: Record<Exclude<DecisionCategory, "other">, RegExp[]> 
     /\belectri(?:cal|city)\b/i,
     /\belectrical equipment\b/i,
     /\b(?:outlet|socket|breaker|fuse|wiring|wire|power outage|short circuit)\b/i,
-    /\b(?:light|lights)\b.{0,20}\b(?:flicker(?:ing)?|out)\b/i,
+    /\b(?:flicker(?:s|ed|ing)?)\b.{0,20}\b(?:light|lights)\b/i,
+    /\b(?:light|lights)\b.{0,20}\b(?:flicker(?:s|ed|ing)?|out)\b/i,
   ],
   air_conditioning: [
     /\b(?:air conditioning|air conditioner|a\/c|ac(?: unit)?|hvac|ventilation|thermostat)\b/i,
@@ -51,9 +53,49 @@ const criticalElectricalContext: RegExp[] = [
 ];
 
 const issueRules: RegExp[] = [
-  /\b(?:leak(?:ing)?|drip(?:ping)?|burst|flood(?:ing)?|broken|not working|does not work|doesn't work|won't work|stopped working|faulty|damaged|loose|jammed|clogged|blocked|flicker(?:ing)?|not cooling|no cool air|overheat(?:ing)?|crack(?:ed)?|scratch|scuff|stain|out of order|malfunction(?:ing)?)\b/i,
+  /\b(?:leak(?:ing)?|drip(?:ping)?|burst|flood(?:ing)?|broken|not working|does not work|doesn't work|won't work|stopped working|faulty|damaged|loose|jammed|clogged|blocked|flicker(?:s|ed|ing)?|rattl(?:e|ing)|not cooling|no cool air|overheat(?:ing)?|crack(?:ed)?|scratch|scuff|stain|out of order|malfunction(?:ing)?)\b/i,
   /\b(?:lights?|power)\s+(?:are\s+)?out\b/i,
 ];
+
+const knowledgeRetrievalRules: Record<string, RegExp[]> = {
+  electrical_safety: [
+    ...criticalSafetyRules,
+  ],
+  water_leak: [
+    /\b(?:water|pipe|ceiling)\b.{0,40}\b(?:leak(?:ing)?|drip(?:ping)?|burst|flood(?:ing)?)\b/i,
+    /\b(?:leak(?:ing)?|drip(?:ping)?|burst|flood(?:ing)?)\b.{0,40}\b(?:water|pipe|ceiling)\b/i,
+    /\b(?:faucet|tap|toilet|drain|sink|sewage)\b/i,
+  ],
+  air_conditioning: classificationRules.air_conditioning,
+  routine_repair: [/\b(?:loose|wobbly)\s+(?:door\s+)?handle\b/i],
+  lighting: [
+    /\b(?:flicker(?:s|ed|ing)?)\b.{0,20}\b(?:light|lights)\b/i,
+    /\b(?:light|lights)\b.{0,20}\b(?:flicker(?:s|ed|ing)?|out)\b/i,
+  ],
+  water_and_electricity: [
+    /\b(?:water|wet\s+(?:patch|area|floor|spot))\b.{0,120}\b(?:near|close\s+to|beside|next\s+to|around|by|on|inside)\b.{0,40}\b(?:outlet|socket|power\s+strip|electrical\s+equipment|wire|breaker|panel)\b/i,
+    /\b(?:outlet|socket|power\s+strip|electrical\s+equipment|wire|breaker|panel)\b.{0,120}\b(?:near|close\s+to|beside|next\s+to|surrounded\s+by|in)\b.{0,40}\b(?:water|wet\s+(?:patch|area|floor|spot))\b/i,
+  ],
+};
+
+type KnowledgeRecord = (typeof maintenanceKnowledge.records)[number];
+
+function retrieveKnowledge(text: string, ambiguous: boolean): KnowledgeRecord[] {
+  return maintenanceKnowledge.records.filter((record) => {
+    if (record.topic === "unclear_report") {
+      return ambiguous || !hasReportedMatch(text, issueRules);
+    }
+
+    if (record.topic === "electrical_safety") {
+      return hasReportedMatch(text, criticalSafetyRules) ||
+        (hasReportedMatch(text, [/\bburning\s+(?:smell|odor|odour)\b/i]) &&
+          hasMatch(text, criticalElectricalContext));
+    }
+
+    const rules = knowledgeRetrievalRules[record.topic] ?? [];
+    return hasReportedMatch(text, rules);
+  });
+}
 
 function hasMatch(text: string, rules: RegExp[]): boolean {
   return rules.some((rule) => rule.test(text));
@@ -64,8 +106,14 @@ function hasReportedMatch(text: string, rules: RegExp[]): boolean {
     const globalRule = new RegExp(rule.source, `${rule.flags.replace(/[gy]/g, "")}g`);
 
     for (const match of text.matchAll(globalRule)) {
-      const prefix = text.slice(Math.max(0, (match.index ?? 0) - 45), match.index);
-      const negatesIndicator = /\b(?:no|not|without|never|doesn't|does not|don't|do not|isn't|is not|aren't|are not)\s+(?:(?:any|visible|reported)\s+)?(?:[a-z]+\s+){0,3}$/i.test(prefix);
+      const prefix = text.slice(Math.max(0, (match.index ?? 0) - 100), match.index);
+      const negation = prefix.match(/\b(?:no|without|not|never|doesn't|does not|don't|do not|isn't|is not|aren't|are not)\b([^.!?]*)$/i);
+      const negatedTerms = /\b(?:fire|smoke|sparks?|sparking|burning|smell|odor|odour|exposed|live|electrical|wires?|wiring|water|leaks?|flood(?:ing|ed)?|gas\s+(?:leak|smell)|injur(?:y|ed)|one\s+(?:is|are)|person\s+(?:is|was)|people\s+(?:are|were))\b/gi;
+      const remainder = negation?.[1]
+        .replace(negatedTerms, "")
+        .replace(/\b(?:and|or|any|visible|reported)\b/gi, "")
+        .replace(/[\s,;:()-]/g, "");
+      const negatesIndicator = negation !== null && remainder === "";
 
       if (!negatesIndicator) {
         return true;
@@ -134,42 +182,49 @@ app.post("/api/maintenance-requests/decision", async (c) => {
 
   const text = `${cleaned.title}\n${cleaned.description}\n${cleaned.location}`;
   const matchedCategories = (Object.keys(classificationRules) as (keyof typeof classificationRules)[])
-    .filter((category) => hasMatch(text, classificationRules[category]));
+    .filter((matchedCategory) => hasReportedMatch(text, classificationRules[matchedCategory]));
   const ambiguous = matchedCategories.length > 1;
-  const category: DecisionCategory = ambiguous
-    ? "other"
-    : matchedCategories[0] ?? "other";
-
-  // Critical hazards override ordinary urgency rules; burning odors are critical when electrical equipment is mentioned.
-  const criticalHazard = hasReportedMatch(text, criticalSafetyRules) ||
-    (hasReportedMatch(text, [/\bburning\s+(?:smell|odor|odour)\b/i]) &&
-      hasMatch(text, criticalElectricalContext));
-  // Any other detected safety concern is escalated for a person; keyword matches never certify that a situation is safe.
-  const safetyConcern = criticalHazard || hasReportedMatch(text, safetyConcernRules);
+  const knowledge = retrieveKnowledge(text, ambiguous);
+  const waterSafety = knowledge.find((record) => record.topic === "water_and_electricity");
+  const electricalSafety = knowledge.find((record) => record.topic === "electrical_safety");
+  const criticalRecord = waterSafety ?? electricalSafety;
+  const criticalHazard = criticalRecord !== undefined;
   const unclear = !hasReportedMatch(text, issueRules);
+  // Electrical hazard guidance wins over routine issue matches; otherwise retrieved topic records provide category and urgency context.
+  const matchedKnowledge = criticalRecord ?? knowledge.find((record) =>
+    matchedCategories.includes(record.category as Exclude<DecisionCategory, "other">)
+  ) ?? knowledge.find((record) => record.topic === "routine_repair");
+  const category: DecisionCategory = criticalRecord?.category ??
+    (ambiguous ? "other" : matchedKnowledge?.category ?? matchedCategories[0] ?? "other");
+  const safetyConcern = criticalHazard || hasReportedMatch(text, safetyConcernRules);
 
   let urgencyScore = 1;
   let urgencyLevel: UrgencyLevel = "low";
+  let needsHumanReview = false;
 
-  if (criticalHazard) {
-    urgencyScore = 4;
+  if (criticalRecord) {
+    urgencyScore = criticalRecord.urgency_score_guidance;
     urgencyLevel = "critical";
+    needsHumanReview = criticalRecord.human_review_required;
   } else if (safetyConcern || hasReportedMatch(text, highUrgencyRules)) {
-    urgencyScore = 3;
+    const leakGuidance = knowledge.find((record) => record.topic === "water_leak");
+    urgencyScore = leakGuidance?.urgency_score_guidance ?? 3;
     urgencyLevel = "high";
-  } else if (unclear) {
-    urgencyScore = 0;
+    needsHumanReview = true;
+  } else if (ambiguous || unclear) {
+    const unclearGuidance = knowledge.find((record) => record.topic === "unclear_report");
+    urgencyScore = unclearGuidance?.urgency_score_guidance ?? 0;
     urgencyLevel = "unknown";
-  } else if (/\b(?:air conditioning|air conditioner|a\/c|ac(?: unit)?|hvac)\b.{0,40}\b(?:not cooling|doesn't cool|does not cool|no cool air)\b/i.test(text) ||
-    /\b(?:not cooling|doesn't cool|does not cool|no cool air)\b.{0,40}\b(?:air conditioning|air conditioner|a\/c|ac(?: unit)?|hvac)\b/i.test(text)) {
-    urgencyScore = 2;
-    urgencyLevel = "moderate";
-  } else if (/\b(?:loose|wobbly)\s+(?:door\s+)?handle\b/i.test(text)) {
-    urgencyScore = 1;
-    urgencyLevel = "low";
-  } else if (/\b(?:minor|cosmetic)\s+(?:scratch|scuff|stain|paint damage)\b/i.test(text)) {
-    urgencyScore = 0;
-    urgencyLevel = "low";
+    needsHumanReview = unclearGuidance?.human_review_required ?? true;
+  } else if (matchedKnowledge?.topic === "air_conditioning") {
+    const notCooling = hasReportedMatch(text, [/\b(?:not cooling|doesn't cool|does not cool|no cool air)\b/i]);
+    urgencyScore = notCooling ? matchedKnowledge.urgency_score_guidance : 1;
+    urgencyLevel = notCooling ? "moderate" : "low";
+    needsHumanReview = matchedKnowledge.human_review_required;
+  } else if (matchedKnowledge) {
+    urgencyScore = matchedKnowledge.urgency_score_guidance;
+    urgencyLevel = urgencyScore === 2 ? "moderate" : urgencyScore === 1 ? "low" : "unknown";
+    needsHumanReview = matchedKnowledge.human_review_required;
   } else if (hasReportedMatch(text, [/\b(?:not working|does not work|doesn't work|stopped working|broken|damaged|clogged|blocked)\b/i])) {
     urgencyScore = 2;
     urgencyLevel = "moderate";
@@ -181,7 +236,7 @@ app.post("/api/maintenance-requests/decision", async (c) => {
       category,
       urgency_score: urgencyScore,
       urgency_level: urgencyLevel,
-      needs_human_review: safetyConcern || ambiguous || unclear || urgencyScore >= 3,
+      needs_human_review: needsHumanReview || safetyConcern || ambiguous || unclear || urgencyScore >= 3,
     },
     decision_source: "fallback",
     method: "deterministic_rules",

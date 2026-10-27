@@ -1,0 +1,181 @@
+[
+  {
+    "case_id": "T01",
+    "case_type": "normal",
+    "input": {
+      "title": "Water leaking from classroom ceiling",
+      "description": "Water is dripping from the ceiling onto the classroom floor and may damage nearby equipment.",
+      "location": "Building E1, Floor 2"
+    },
+    "expected_decision": {
+      "category": "plumbing",
+      "urgency_score": 3,
+      "urgency_level": "high",
+      "needs_human_review": true
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Flag for human review because water is actively leaking and may cause damage.",
+    "reason": "An active ceiling leak is a plumbing issue and needs prompt attention."
+  },
+  {
+    "case_id": "T02",
+    "case_type": "normal",
+    "input": {
+      "title": "Air conditioner not cooling",
+      "description": "The air conditioner is running, but the classroom remains hot. There is no smoke, burning smell, or exposed wiring.",
+      "location": "Building E1, Floor 3"
+    },
+    "expected_decision": {
+      "category": "air_conditioning",
+      "urgency_score": 2,
+      "urgency_level": "moderate",
+      "needs_human_review": false
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "No immediate human review required based on the information supplied.",
+    "reason": "The cooling system is not working, but no immediate safety hazard is described."
+  },
+  {
+    "case_id": "T03",
+    "case_type": "normal",
+    "input": {
+      "title": "Loose classroom door handle",
+      "description": "The classroom door handle is loose but the door can still open and close. No one is injured.",
+      "location": "Building E2, Floor 1"
+    },
+    "expected_decision": {
+      "category": "other",
+      "urgency_score": 1,
+      "urgency_level": "low",
+      "needs_human_review": false
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Routine maintenance; no immediate human review required.",
+    "reason": "This is a minor repair with no stated immediate safety risk."
+  },
+  {
+    "case_id": "T04",
+    "case_type": "edge",
+    "input": {
+      "title": "Water near electrical outlet",
+      "description": "Water is leaking down the wall close to an electrical outlet. The outlet area may be wet.",
+      "location": "Building E1, Floor 1"
+    },
+    "expected_decision": {
+      "category": "electrical",
+      "urgency_score": 4,
+      "urgency_level": "critical",
+      "needs_human_review": true
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Always flag for urgent human assessment because water near electricity may be dangerous.",
+    "reason": "The request contains both a leak and a possible electrical hazard; safety risk takes priority over ordinary plumbing classification."
+  },
+  {
+    "case_id": "T05",
+    "case_type": "edge",
+    "input": {
+      "title": "Air conditioner making a strange noise",
+      "description": "The air conditioner makes an unusual rattling noise but still cools the room. There is no smoke, burning smell, or water leak.",
+      "location": "Building E3, Floor 2"
+    },
+    "expected_decision": {
+      "category": "air_conditioning",
+      "urgency_score": 1,
+      "urgency_level": "low",
+      "needs_human_review": false
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Routine review is sufficient unless further evidence of danger appears.",
+    "reason": "The issue is associated with the air conditioner but no immediate hazard is reported."
+  },
+  {
+    "case_id": "T06",
+    "case_type": "edge",
+    "input": {
+      "title": "Light flickering without burning smell",
+      "description": "The corridor light flickers occasionally. There is no burning smell, smoke, exposed wire, or spark.",
+      "location": "Building E1, Floor 1"
+    },
+    "expected_decision": {
+      "category": "electrical",
+      "urgency_score": 2,
+      "urgency_level": "moderate",
+      "needs_human_review": false
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Classify as electrical; escalate for human review if additional danger signs are reported.",
+    "reason": "A flickering light is an electrical issue, but the case explicitly excludes critical warning signs."
+  },
+  {
+    "case_id": "T07",
+    "case_type": "fallback",
+    "input": {
+      "title": "",
+      "description": "The classroom has a maintenance problem.",
+      "location": "Building E1"
+    },
+    "expected_decision": {
+      "http_status": 400,
+      "error": "title must be a non-empty string",
+      "field": "title"
+    },
+    "expected_fallback": false,
+    "expected_review_behavior": "Do not produce a maintenance recommendation; reject invalid input with a validation error.",
+    "reason": "The title is empty, so input validation should stop processing before decision rules run."
+  },
+  {
+    "case_id": "T08",
+    "case_type": "fallback",
+    "input": {
+      "title": "Strange noise",
+      "description": "There is a strange noise somewhere in the building, but I am not sure where it comes from.",
+      "location": "Building E1"
+    },
+    "expected_decision": {
+      "category": "other",
+      "urgency_score": 0,
+      "urgency_level": "unknown",
+      "needs_human_review": true
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Use deterministic fallback and flag for human review because the issue is unclear.",
+    "reason": "The description does not provide enough information to identify a specific maintenance category or urgency confidently."
+  },
+  {
+    "case_id": "T09",
+    "case_type": "difficult",
+    "input": {
+      "title": "Burning smell near corridor light",
+      "description": "The corridor light is flickering and there is a burning smell near the fixture.",
+      "location": "Building E1, Floor 1"
+    },
+    "expected_decision": {
+      "category": "electrical",
+      "urgency_score": 4,
+      "urgency_level": "critical",
+      "needs_human_review": true
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Flag for urgent human assessment; do not treat it as routine lighting maintenance.",
+    "reason": "A burning smell near a flickering light is a potential electrical safety hazard."
+  },
+  {
+    "case_id": "T10",
+    "case_type": "difficult",
+    "input": {
+      "title": "Wet floor and ceiling stain",
+      "description": "There is a new wet patch on the floor below a ceiling stain. The source is not visible, and the area is close to a power strip.",
+      "location": "Building E2, Floor 2"
+    },
+    "expected_decision": {
+      "category": "plumbing",
+      "urgency_score": 4,
+      "urgency_level": "critical",
+      "needs_human_review": true
+    },
+    "expected_fallback": true,
+    "expected_review_behavior": "Flag for urgent human review because water may be near electrical equipment and the source is unknown.",
+    "reason": "The likely source may be a leak, but potential water-electrical interaction makes safety review more important than a simple plumbing label."
+  }
+]

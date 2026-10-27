@@ -1,0 +1,69 @@
+{
+  "knowledge_base_name": "campus_maintenance_guidelines",
+  "version": "1.0",
+  "records": [
+    {
+      "id": "K001",
+      "topic": "electrical_safety",
+      "title": "Electrical warning signs",
+      "content": "A burning smell, smoke, sparks, exposed wiring, or water near electrical equipment may indicate a safety hazard. Recommend urgent human assessment.",
+      "category": "electrical",
+      "urgency_score_guidance": 4,
+      "human_review_required": true
+    },
+    {
+      "id": "K002",
+      "topic": "water_leak",
+      "title": "Active water leaks",
+      "content": "Water dripping from a ceiling or a leaking pipe is generally a plumbing issue. Active leaks that may damage equipment need prompt attention. Water near electrical equipment requires urgent safety review.",
+      "category": "plumbing",
+      "urgency_score_guidance": 3,
+      "human_review_required": true
+    },
+    {
+      "id": "K003",
+      "topic": "air_conditioning",
+      "title": "Air conditioner not cooling",
+      "content": "An air conditioner that runs but does not cool is normally an air-conditioning issue. Without additional safety warning signs, moderate urgency is appropriate.",
+      "category": "air_conditioning",
+      "urgency_score_guidance": 2,
+      "human_review_required": false
+    },
+    {
+      "id": "K004",
+      "topic": "routine_repair",
+      "title": "Minor routine repairs",
+      "content": "A loose door handle or similar minor fixture problem with no immediate safety risk is generally routine maintenance.",
+      "category": "other",
+      "urgency_score_guidance": 1,
+      "human_review_required": false
+    },
+    {
+      "id": "K005",
+      "topic": "lighting",
+      "title": "Flickering lights",
+      "content": "A flickering light is normally an electrical issue. Flickering alone may be moderate urgency. Flickering combined with a burning smell, smoke, sparks, or exposed wiring is a potential critical electrical hazard.",
+      "category": "electrical",
+      "urgency_score_guidance": 2,
+      "human_review_required": false
+    },
+    {
+      "id": "K006",
+      "topic": "unclear_report",
+      "title": "Incomplete or ambiguous reports",
+      "content": "When a report lacks enough information to identify the problem, do not invent missing facts. Use an unknown or uncertain outcome where supported and flag the case for human review.",
+      "category": "other",
+      "urgency_score_guidance": 0,
+      "human_review_required": true
+    },
+    {
+      "id": "K007",
+      "topic": "water_and_electricity",
+      "title": "Water near electrical equipment",
+      "content": "When water is near an electrical outlet, power strip, or other electrical equipment, treat the situation as a potential safety hazard even if the source of the water is uncertain. Recommend urgent human assessment.",
+      "category": "electrical",
+      "urgency_score_guidance": 4,
+      "human_review_required": true
+    }
+  ]
+}
